@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>FlavorBites | Food, Drinks & Snacks Menu with Cart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Smooth animations */
+        .cart-item-enter {
+            animation: slideIn 0.3s ease forwards;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .menu-card {
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .menu-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px -8px rgba(0,0,0,0.15);
+        }
+        .quantity-btn {
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .quantity-btn:active {
+            transform: scale(0.92);
+        }
+        .category-active {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f97316;
+            border-radius: 10px;
+        }
+        /* Square image container - perfect 1:1 ratio */
+        .img-square {
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            object-fit: cover;
+        }
+        /* Mobile optimizations: 2 columns on small screens, 3 on larger */
+        @media (max-width: 640px) {
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        @media (min-width: 641px) {
+            .menu-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .menu-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        .badge-new {
+            background: linear-gradient(135deg, #f97316, #f59e0b);
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        /* Hide number input spinners for cleaner look */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button {
+            opacity: 0.5;
+        }
+        .cart-scrollbar {
+            scrollbar-width: thin;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
+
+<!-- Header -->
+<header class="bg-white shadow-md sticky top-0 z-20 border-b border-orange-100">
+    <div class="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
+                <i class="fas fa-utensils text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-gray-800">Flavor<span class="text-orange-500">Bites</span></h1>
+                <p class="text-xs text-gray-500 hidden sm:block">Real food · Drinks · Snacks</p>
+            </div>
+        </div>
+        <div class="bg-orange-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full">
+            <i class="fas fa-truck-fast text-orange-500 mr-1 sm:mr-2"></i>
+            <span class="text-xs sm:text-sm font-medium text-gray-700">Fresh & Fast</span>
+        </div>
+    </div>
+</header>
+
+<div class="container mx-auto px-3 sm:px-4 py-6 flex flex-col lg:flex-row gap-6">
+    
+    <!-- Menu Section -->
+    <div class="flex-1">
+        <!-- Category Tabs -->
+        <div class="flex flex-wrap gap-2 sm:gap-3 mb-6 justify-center sm:justify-start">
+            <button data-category="all" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-orange-500 text-white shadow-md">🍽️ All</button>
+            <button data-category="food" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-orange-100">🍔 Food</button>
+            <button data-category="drink" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-orange-100">🥤 Drinks</button>
+            <button data-category="snack" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-orange-100">🍿 Snacks</button>
+        </div>
+        
+        <div id="menu" class="menu-grid grid gap-4 sm:gap-5">
+            <!-- Dynamic menu items injected here -->
+        </div>
+    </div>
+
+    <!-- Cart Section - Sticky on desktop, NO delivery fee, NO numeric table style (clean layout) -->
+    <div class="w-full lg:w-96">
+        <div class="bg-white rounded-2xl shadow-xl sticky top-24 overflow-hidden border border-gray-100">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-5 py-4">
+                <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-shopping-cart"></i> 
+                    Your Cart
+                    <span id="cartItemCount" class="bg-white text-orange-600 text-xs px-2 py-0.5 rounded-full ml-2">0</span>
+                </h2>
+            </div>
+            
+            <div class="p-4 sm:p-5 max-h-96 overflow-y-auto cart-scrollbar" id="cart-items-container">
+                <ul id="cart-items" class="space-y-3">
+                    <li class="text-center text-gray-400 py-8 flex flex-col items-center gap-2">
+                        <i class="fas fa-shopping-basket text-4xl opacity-40"></i>
+                        <p class="text-sm">Your cart is empty</p>
+                        <p class="text-xs">Add delicious items!</p>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Cart summary: Subtotal and Total ONLY (NO DELIVERY FEE, NO EXTRA TABLE) -->
+            <div class="border-t border-gray-100 p-4 sm:p-5 bg-gray-50">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-gray-600 font-medium">Subtotal</span>
+                    <span class="text-gray-800 font-semibold text-lg" id="subtotal-price">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span class="text-base sm:text-lg font-bold text-gray-800">Total</span>
+                    <span class="text-xl sm:text-2xl font-extrabold text-orange-600" id="total-price">$0.00</span>
+                </div>
+                <button id="checkout" class="mt-5 w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
+                    <i class="fas fa-credit-card"></i> Checkout Now
+                </button>
+                <button id="clearCart" class="mt-2 w-full text-gray-500 text-sm hover:text-red-500 transition py-1">
+                    <i class="fas fa-trash-alt mr-1"></i> Clear Cart
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Message -->
+<div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-5 py-2.5 rounded-full shadow-lg z-50 hidden transition-all duration-300 flex items-center gap-2 text-sm sm:text-base">
+    <i class="fas fa-check-circle"></i> <span id="toastMsg">Added to cart!</span>
+</div>
+
+<script>
+// ============================================
+// ENHANCED MENU: FOOD, DRINKS, SNACKS with SQUARE IMAGES
+// NO DELIVERY FEE — ONLY SUBTOTAL + TOTAL (TOTAL = SUBTOTAL)
+// NO "NUMBER TABLE" STYLE IN CART (CLEAN ITEMS LIST)
+// ============================================
+const menuItems = [
+    // FOOD Category
+    { id: 1, name: "Classic Cheeseburger", price: 6.99, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop", category: "food", badge: "🔥 Bestseller" },
+    { id: 2, name: "Pepperoni Pizza", price: 4.49, image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=400&fit=crop", category: "food", badge: "⭐ Popular" },
+    { id: 3, name: "BBQ Chicken Burger", price: 7.99, image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=400&fit=crop", category: "food", badge: "🔥 BBQ" },
+    { id: 4, name: "Margherita Pizza", price: 12.99, image: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=400&h=400&fit=crop", category: "food", badge: "🍕 Classic" },
+    { id: 5, name: "Spicy Chicken Wings", price: 8.99, image: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=400&h=400&fit=crop", category: "food", badge: "🌶️ Spicy" },
+    { id: 6, name: "Caesar Salad", price: 7.49, image: "https://images.unsplash.com/photo-1550304943-4f24f54dd8a9?w=400&h=400&fit=crop", category: "food", badge: "🥗 Healthy" },
+    
+    // DRINKS Category
+    { id: 7, name: "Iced Caramel Latte", price: 5.49, image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop", category: "drink", badge: "☕ Cold Brew" },
+    { id: 8, name: "Fresh Orange Juice", price: 3.99, image: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&h=400&fit=crop", category: "drink", badge: "🍊 Fresh" },
+    { id: 9, name: "Matcha Latte", price: 4.99, image: "https://images.unsplash.com/photo-1534777367038-9404f45b869b?w=400&h=400&fit=crop", category: "drink", badge: "🍵 Premium" },
+    { id: 10, name: "Strawberry Smoothie", price: 5.99, image: "https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=400&fit=crop", category: "drink", badge: "🍓 Fruity" },
+    { id: 11, name: "Classic Coke", price: 2.49, image: "https://images.unsplash.com/photo-1554866585-cd9481ca13b0?w=400&h=400&fit=crop", category: "drink", badge: "🥤 Refreshing" },
+    { id: 12, name: "Mango Lassi", price: 4.49, image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=400&fit=crop", category: "drink", badge: "🥭 Creamy" },
+    
+    // SNACKS Category
+    { id: 13, name: "Crispy French Fries", price: 3.49, image: "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=400&h=400&fit=crop", category: "snack", badge: "🥔 Crispy" },
+    { id: 14, name: "Chocolate Lava Cake", price: 5.99, image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=400&fit=crop", category: "snack", badge: "🍫 Decadent" },
+    { id: 15, name: "New York Cheesecake", price: 6.49, image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=400&fit=crop", category: "snack", badge: "🍰 Creamy" },
+    { id: 16, name: "Garlic Bread Sticks", price: 4.29, image: "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=400&h=400&fit=crop", category: "snack", badge: "🧄 Savory" },
+    { id: 17, name: "Onion Rings", price: 4.99, image: "https://images.unsplash.com/photo-1639024471283-035188dd12ef?w=400&h=400&fit=crop", category: "snack", badge: "🧅 Crunchy" },
+    { id: 18, name: "Nachos with Cheese", price: 5.49, image: "https://images.unsplash.com/photo-1513456852971-30c0b8199ebe?w=400&h=400&fit=crop", category: "snack", badge: "🧀 Cheesy" }
+];
+
+// Cart array
+let cart = [];
+
+// DOM Elements
+const menuContainer = document.getElementById("menu");
+const cartItemsList = document.getElementById("cart-items");
+const totalPriceEl = document.getElementById("total-price");
+const subtotalPriceEl = document.getElementById("subtotal-price");
+const cartItemCountSpan = document.getElementById("cartItemCount");
+const checkoutBtn = document.getElementById("checkout");
+const clearCartBtn = document.getElementById("clearCart");
+const toast = document.getElementById("toast");
+const toastMsg = document.getElementById("toastMsg");
+
+let currentCategory = "all";
+
+// ========== LOCALSTORAGE PERSISTENCE ==========
+function saveCartToLocalStorage() {
+    localStorage.setItem('flavorbites_cart', JSON.stringify(cart));
+}
+
+function loadCartFromLocalStorage() {
+    const storedCart = localStorage.getItem('flavorbites_cart');
+    if (storedCart) {
+        try {
+            const parsed = JSON.parse(storedCart);
+            // Validate each item exists in current menu
+            const validatedCart = parsed.filter(cartItem => menuItems.some(menuItem => menuItem.id === cartItem.id));
+            // Sync metadata with current menu
+            const syncedCart = validatedCart.map(cartItem => {
+                const menuMatch = menuItems.find(m => m.id === cartItem.id);
+                if (menuMatch) {
+                    return {
+                        ...cartItem,
+                        name: menuMatch.name,
+                        price: menuMatch.price,
+                        image: menuMatch.image
+                    };
+                }
+                return cartItem;
+            });
+            cart = syncedCart;
+        } catch(e) { cart = []; }
+    } else {
+        cart = [];
+    }
+}
+
+// Show toast
+function showToast(message) {
+    toastMsg.textContent = message;
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 2000);
+}
+
+// Update cart UI (NO DELIVERY FEE: total = subtotal)
+function updateCartUI() {
+    if (cart.length === 0) {
+        cartItemsList.innerHTML = `
+            <li class="text-center text-gray-400 py-8 flex flex-col items-center gap-2">
+                <i class="fas fa-shopping-basket text-4xl opacity-40"></i>
+                <p class="text-sm">Your cart is empty</p>
+                <p class="text-xs">Add delicious items!</p>
+            </li>
+        `;
+        cartItemCountSpan.textContent = "0";
+        subtotalPriceEl.textContent = "$0.00";
+        totalPriceEl.textContent = "$0.00";
+        return;
+    }
+    
+    let subtotal = 0;
+    let totalItems = 0;
+    
+    cartItemsList.innerHTML = cart.map(item => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        totalItems += item.quantity;
+        return `
+            <li class="cart-item-enter bg-gray-50 rounded-xl p-3 border border-gray-100">
+                <div class="flex gap-3">
+                    <img src="${item.image}" class="w-14 h-14 rounded-lg object-cover shadow-sm" alt="${item.name}" loading="lazy">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-semibold text-gray-800 text-sm sm:text-base">${escapeHtml(item.name)}</h4>
+                            <button onclick="removeItemCompletely(${item.id})" class="text-gray-400 hover:text-red-500 transition">
+                                <i class="fas fa-trash-alt text-sm"></i>
+                            </button>
+                        </div>
+                        <p class="text-orange-600 font-bold text-sm">$${item.price.toFixed(2)}</p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <button onclick="updateQuantity(${item.id}, -1)" class="quantity-btn w-7 h-7 rounded-full bg-gray-200 hover:bg-orange-500 hover:text-white transition flex items-center justify-center font-bold">-</button>
+                            <span class="w-8 text-center font-medium text-sm">${item.quantity}</span>
+                            <button onclick="updateQuantity(${item.id}, 1)" class="quantity-btn w-7 h-7 rounded-full bg-gray-200 hover:bg-orange-500 hover:text-white transition flex items-center justify-center font-bold">+</button>
+                            <span class="text-sm font-semibold text-gray-700 ml-auto">$${itemTotal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        `;
+    }).join('');
+    
+    // Total equals subtotal (NO DELIVERY FEE)
+    subtotalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
+    totalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
+    cartItemCountSpan.textContent = totalItems;
+    
+    // Save to localStorage after each UI update
+    saveCartToLocalStorage();
+}
+
+// Simple escape to prevent XSS
+function escapeHtml(str) {
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+// Add to cart
+function addToCart(id, quantity = 1) {
+    const menuItem = menuItems.find(item => item.id === id);
+    if (!menuItem) return;
+    
+    const existingItem = cart.find(item => item.id === id);
+    if (existingItem) {
+        existingItem.quantity += quantity;
+    } else {
+        cart.push({
+            id: menuItem.id,
+            name: menuItem.name,
+            price: menuItem.price,
+            quantity: quantity,
+            image: menuItem.image
+        });
+    }
+    updateCartUI();
+    showToast(`✓ ${menuItem.name} added!`);
+    
+    // Bounce animation on cart header
+    const cartHeader = document.querySelector('.bg-gradient-to-r.from-orange-500');
+    if (cartHeader) {
+        cartHeader.style.transform = 'scale(1.02)';
+        setTimeout(() => { if(cartHeader) cartHeader.style.transform = 'scale(1)'; }, 200);
+    }
+}
+
+// Update quantity
+function updateQuantity(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (item) {
+        const newQuantity = item.quantity + delta;
+        if (newQuantity <= 0) {
+            removeItemCompletely(id);
+        } else {
+            item.quantity = newQuantity;
+            updateCartUI();
+        }
+    }
+}
+
+// Remove item completely
+function removeItemCompletely(id) {
+    cart = cart.filter(item => item.id !== id);
+    updateCartUI();
+    showToast(`Item removed`);
+}
+
+// Clear cart with confirmation
+function clearCart() {
+    if (cart.length === 0) {
+        showToast("Cart already empty");
+        return;
+    }
+    if (confirm("Clear your entire cart?")) {
+        cart = [];
+        updateCartUI();
+        showToast("🛒 Cart cleared");
+    }
+}
+
+// Checkout process (NO DELIVERY FEE, just subtotal = total)
+function checkout() {
+    if (cart.length === 0) {
+        alert("❌ Your cart is empty! Please add some delicious items.");
+        return;
+    }
+    
+    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    const total = subtotal; // No delivery fee
+    
+    let orderSummary = cart.map(i => `${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}`).join('\n');
+    
+    alert(`🍽️ ORDER SUMMARY 🍽️\n\n${orderSummary}\n\nSubtotal: $${subtotal.toFixed(2)}\n━━━━━━━━━━━━━━\nTOTAL: $${total.toFixed(2)}\n\nThank you for ordering from FlavorBites!\nYour food will be prepared fresh and delivered soon! 🚚`);
+    
+    console.log("Order placed:", { cart, total, timestamp: new Date().toISOString() });
+    cart = [];
+    updateCartUI();
+    showToast("🎉 Order placed! Enjoy your meal!");
+}
+
+// Render menu based on selected category (Square images, responsive grid)
+function renderMenu(category = "all") {
+    let filteredItems = menuItems;
+    if (category !== "all") {
+        filteredItems = menuItems.filter(item => item.category === category);
+    }
+    
+    menuContainer.innerHTML = filteredItems.map(item => `
+        <div class="menu-card bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100">
+            <!-- Perfect square image container (1:1 ratio) -->
+            <div class="relative w-full overflow-hidden bg-gray-200" style="aspect-ratio: 1 / 1;">
+                <img src="${item.image}" alt="${item.name}" class="img-square w-full h-full object-cover hover:scale-105 transition duration-500" loading="lazy">
+                <span class="absolute top-2 left-2 badge-new text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md">
+                    ${item.badge}
+                </span>
+            </div>
+            <div class="p-3 sm:p-4">
+                <div class="flex justify-between items-start gap-1 mb-1">
+                    <h3 class="font-bold text-gray-800 text-sm sm:text-base truncate">${escapeHtml(item.name)}</h3>
+                    <span class="text-orange-600 font-extrabold text-sm sm:text-base">$${item.price.toFixed(2)}</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2 sm:mt-3">
+                    <div class="flex items-center border border-gray-200 rounded-lg bg-gray-50">
+                        <button class="qty-decrement w-7 sm:w-8 h-7 sm:h-8 rounded-l-lg hover:bg-orange-100 text-gray-600 font-bold transition text-sm" data-id="${item.id}">-</button>
+                        <input type="number" id="qty-${item.id}" value="1" min="1" class="w-10 sm:w-12 text-center border-x border-gray-200 py-1 text-xs sm:text-sm font-semibold focus:outline-none bg-white">
+                        <button class="qty-increment w-7 sm:w-8 h-7 sm:h-8 rounded-r-lg hover:bg-orange-100 text-gray-600 font-bold transition text-sm" data-id="${item.id}">+</button>
+                    </div>
+                    <button class="add-to-cart-btn flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-1.5 sm:py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-xs sm:text-sm" data-id="${item.id}">
+                        <i class="fas fa-cart-plus text-xs"></i> Add
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Attach quantity button events
+    document.querySelectorAll('.qty-decrement').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = parseInt(btn.dataset.id);
+            const input = document.getElementById(`qty-${id}`);
+            if (input) {
+                let val = parseInt(input.value);
+                if (val > 1) input.value = val - 1;
+            }
+        });
+    });
+    
+    document.querySelectorAll('.qty-increment').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = parseInt(btn.dataset.id);
+            const input = document.getElementById(`qty-${id}`);
+            if (input) {
+                let val = parseInt(input.value);
+                input.value = val + 1;
+            }
+        });
+    });
+    
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(btn.dataset.id);
+            const qtyInput = document.getElementById(`qty-${id}`);
+            let quantity = 1;
+            if (qtyInput) quantity = parseInt(qtyInput.value);
+            if (quantity > 0) {
+                addToCart(id, quantity);
+                if (qtyInput) qtyInput.value = 1;
+                btn.style.transform = 'scale(0.96)';
+                setTimeout(() => btn.style.transform = 'scale(1)', 150);
+            }
+        });
+    });
+}
+
+// Category Filter with active state
+function initCategoryFilters() {
+    const catTabs = document.querySelectorAll('.category-tab');
+    catTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const category = tab.dataset.category;
+            currentCategory = category;
+            
+            // Update active styles
+            catTabs.forEach(t => {
+                t.classList.remove('bg-orange-500', 'text-white', 'shadow-md');
+                t.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            tab.classList.remove('bg-gray-200', 'text-gray-700');
+            tab.classList.add('bg-orange-500', 'text-white', 'shadow-md');
+            
+            renderMenu(category);
+        });
+    });
+}
+
+// Global functions for cart buttons (required for onclick in dynamic cart)
+window.updateQuantity = updateQuantity;
+window.removeItemCompletely = removeItemCompletely;
+
+// Initialize event listeners
+function initEventListeners() {
+    checkoutBtn.addEventListener("click", checkout);
+    clearCartBtn.addEventListener("click", clearCart);
+}
+
+// Initialize the whole app: load persisted cart, render menu, setup filters, update UI
+function init() {
+    loadCartFromLocalStorage();   // load existing cart from storage
+    renderMenu("all");            // render full menu
+    initCategoryFilters();        // setup category switching
+    initEventListeners();         // checkout & clear cart
+    updateCartUI();               // reflect cart (if any stored items)
+    
+    // Ensure "All" tab is active after load
+    const allTab = document.querySelector('.category-tab[data-category="all"]');
+    if (allTab) {
+        document.querySelectorAll('.category-tab').forEach(t => {
+            t.classList.remove('bg-orange-500', 'text-white', 'shadow-md');
+            t.classList.add('bg-gray-200', 'text-gray-700');
+        });
+        allTab.classList.remove('bg-gray-200', 'text-gray-700');
+        allTab.classList.add('bg-orange-500', 'text-white', 'shadow-md');
+    }
+}
+
+// Start application
+init();
+</script>
+</body>
+</html>
