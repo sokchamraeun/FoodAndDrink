@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>FlavorBites | Food, Drinks & Snacks Menu with Cart</title>
+    <title>FlavorBites | Food, Drinks & Snacks Menu with Cart & Invoice</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -94,12 +94,52 @@
         .cart-scrollbar {
             scrollbar-width: thin;
         }
+
+        /* PRINT INVOICE STYLES - HIDE EVERYTHING EXCEPT INVOICE CONTAINER */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoice-print-container, #invoice-print-container * {
+                visibility: visible;
+            }
+            #invoice-print-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                background: white;
+                padding: 1.5rem;
+                margin: 0;
+                box-shadow: none;
+                z-index: 9999;
+            }
+            /* Ensure background colors print */
+            .print-bg-orange {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            button, .no-print, header, .category-tab, .menu-grid, .cart-section-actions, 
+            #clearCart, #checkout, #printInvoiceBtn, .sticky, footer, .cart-scrollbar {
+                display: none !important;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+        }
+        /* Invoice container hidden by default */
+        #invoice-print-container {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
 
-<!-- Header -->
-<header class="bg-white shadow-md sticky top-0 z-20 border-b border-orange-100">
+<!-- Header (hidden on print) -->
+<header class="bg-white shadow-md sticky top-0 z-20 border-b border-orange-100 no-print">
     <div class="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
@@ -117,7 +157,7 @@
     </div>
 </header>
 
-<div class="container mx-auto px-3 sm:px-4 py-6 flex flex-col lg:flex-row gap-6">
+<div class="container mx-auto px-3 sm:px-4 py-6 flex flex-col lg:flex-row gap-6 no-print">
     
     <!-- Menu Section -->
     <div class="flex-1">
@@ -135,7 +175,7 @@
     </div>
 
     <!-- Cart Section - Sticky on desktop, NO delivery fee, NO numeric table style (clean layout) -->
-    <div class="w-full lg:w-96">
+    <div class="w-full lg:w-96 no-print">
         <div class="bg-white rounded-2xl shadow-xl sticky top-24 overflow-hidden border border-gray-100">
             <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-5 py-4">
                 <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
@@ -155,7 +195,7 @@
                 </ul>
             </div>
             
-            <!-- Cart summary: Subtotal and Total ONLY (NO DELIVERY FEE, NO EXTRA TABLE) -->
+            <!-- Cart summary: Subtotal and Total ONLY (NO DELIVERY FEE) -->
             <div class="border-t border-gray-100 p-4 sm:p-5 bg-gray-50">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-gray-600 font-medium">Subtotal</span>
@@ -168,24 +208,34 @@
                 <button id="checkout" class="mt-5 w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
                     <i class="fas fa-credit-card"></i> Checkout Now
                 </button>
-                <button id="clearCart" class="mt-2 w-full text-gray-500 text-sm hover:text-red-500 transition py-1">
-                    <i class="fas fa-trash-alt mr-1"></i> Clear Cart
-                </button>
+                <div class="flex gap-2 mt-2">
+                    <button id="clearCart" class="flex-1 text-gray-500 text-sm hover:text-red-500 transition py-2 bg-gray-100 rounded-lg flex items-center justify-center gap-1">
+                        <i class="fas fa-trash-alt text-xs"></i> Clear
+                    </button>
+                    <button id="printInvoiceBtn" class="flex-1 text-gray-500 text-sm hover:text-orange-600 transition py-2 bg-gray-100 rounded-lg flex items-center justify-center gap-1">
+                        <i class="fas fa-file-pdf"></i> Print Invoice
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Toast Message -->
-<div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-5 py-2.5 rounded-full shadow-lg z-50 hidden transition-all duration-300 flex items-center gap-2 text-sm sm:text-base">
+<div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-5 py-2.5 rounded-full shadow-lg z-50 hidden transition-all duration-300 flex items-center gap-2 text-sm sm:text-base no-print">
     <i class="fas fa-check-circle"></i> <span id="toastMsg">Added to cart!</span>
+</div>
+
+<!-- PRINT INVOICE CONTAINER (hidden normally, visible only when printing) -->
+<div id="invoice-print-container">
+    <!-- Dynamic invoice content will be injected here -->
 </div>
 
 <script>
 // ============================================
 // ENHANCED MENU: FOOD, DRINKS, SNACKS with SQUARE IMAGES
-// NO DELIVERY FEE — ONLY SUBTOTAL + TOTAL (TOTAL = SUBTOTAL)
-// NO "NUMBER TABLE" STYLE IN CART (CLEAN ITEMS LIST)
+// NO DELIVERY FEE — ONLY SUBTOTAL + TOTAL
+// NEW: PRINT INVOICE TO PDF (fully styled receipt)
 // ============================================
 const menuItems = [
     // FOOD Category
@@ -224,6 +274,7 @@ const subtotalPriceEl = document.getElementById("subtotal-price");
 const cartItemCountSpan = document.getElementById("cartItemCount");
 const checkoutBtn = document.getElementById("checkout");
 const clearCartBtn = document.getElementById("clearCart");
+const printInvoiceBtn = document.getElementById("printInvoiceBtn");
 const toast = document.getElementById("toast");
 const toastMsg = document.getElementById("toastMsg");
 
@@ -239,9 +290,7 @@ function loadCartFromLocalStorage() {
     if (storedCart) {
         try {
             const parsed = JSON.parse(storedCart);
-            // Validate each item exists in current menu
             const validatedCart = parsed.filter(cartItem => menuItems.some(menuItem => menuItem.id === cartItem.id));
-            // Sync metadata with current menu
             const syncedCart = validatedCart.map(cartItem => {
                 const menuMatch = menuItems.find(m => m.id === cartItem.id);
                 if (menuMatch) {
@@ -261,7 +310,6 @@ function loadCartFromLocalStorage() {
     }
 }
 
-// Show toast
 function showToast(message) {
     toastMsg.textContent = message;
     toast.classList.remove("hidden");
@@ -315,16 +363,12 @@ function updateCartUI() {
         `;
     }).join('');
     
-    // Total equals subtotal (NO DELIVERY FEE)
     subtotalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
     totalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
     cartItemCountSpan.textContent = totalItems;
-    
-    // Save to localStorage after each UI update
     saveCartToLocalStorage();
 }
 
-// Simple escape to prevent XSS
 function escapeHtml(str) {
     return str.replace(/[&<>]/g, function(m) {
         if (m === '&') return '&amp;';
@@ -334,7 +378,6 @@ function escapeHtml(str) {
     });
 }
 
-// Add to cart
 function addToCart(id, quantity = 1) {
     const menuItem = menuItems.find(item => item.id === id);
     if (!menuItem) return;
@@ -353,8 +396,6 @@ function addToCart(id, quantity = 1) {
     }
     updateCartUI();
     showToast(`✓ ${menuItem.name} added!`);
-    
-    // Bounce animation on cart header
     const cartHeader = document.querySelector('.bg-gradient-to-r.from-orange-500');
     if (cartHeader) {
         cartHeader.style.transform = 'scale(1.02)';
@@ -362,7 +403,6 @@ function addToCart(id, quantity = 1) {
     }
 }
 
-// Update quantity
 function updateQuantity(id, delta) {
     const item = cart.find(i => i.id === id);
     if (item) {
@@ -376,14 +416,12 @@ function updateQuantity(id, delta) {
     }
 }
 
-// Remove item completely
 function removeItemCompletely(id) {
     cart = cart.filter(item => item.id !== id);
     updateCartUI();
     showToast(`Item removed`);
 }
 
-// Clear cart with confirmation
 function clearCart() {
     if (cart.length === 0) {
         showToast("Cart already empty");
@@ -396,27 +434,138 @@ function clearCart() {
     }
 }
 
-// Checkout process (NO DELIVERY FEE, just subtotal = total)
 function checkout() {
     if (cart.length === 0) {
         alert("❌ Your cart is empty! Please add some delicious items.");
         return;
     }
-    
     const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-    const total = subtotal; // No delivery fee
-    
+    const total = subtotal;
     let orderSummary = cart.map(i => `${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}`).join('\n');
-    
     alert(`🍽️ ORDER SUMMARY 🍽️\n\n${orderSummary}\n\nSubtotal: $${subtotal.toFixed(2)}\n━━━━━━━━━━━━━━\nTOTAL: $${total.toFixed(2)}\n\nThank you for ordering from FlavorBites!\nYour food will be prepared fresh and delivered soon! 🚚`);
-    
     console.log("Order placed:", { cart, total, timestamp: new Date().toISOString() });
     cart = [];
     updateCartUI();
     showToast("🎉 Order placed! Enjoy your meal!");
 }
 
-// Render menu based on selected category (Square images, responsive grid)
+// ========== PRINT INVOICE / PDF FUNCTIONALITY ==========
+function generateInvoiceHTML() {
+    if (cart.length === 0) {
+        alert("🛒 Your cart is empty. Add items before printing invoice.");
+        return null;
+    }
+    
+    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    const total = subtotal;
+    const orderDate = new Date().toLocaleString();
+    const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+    let itemsHTML = '';
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        itemsHTML += `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 10px 5px; text-align: left;">${escapeHtml(item.name)}</td>
+                <td style="padding: 10px 5px; text-align: center;">${item.quantity}</td>
+                <td style="padding: 10px 5px; text-align: right;">$${item.price.toFixed(2)}</td>
+                <td style="padding: 10px 5px; text-align: right;">$${itemTotal.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
+    return `
+        <div style="max-width: 800px; margin: 0 auto; background: white; font-family: 'Inter', sans-serif; padding: 20px;">
+            <!-- Header Section -->
+            <div style="text-align: center; border-bottom: 2px solid #f97316; padding-bottom: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <div style="background: linear-gradient(135deg, #f97316, #ea580c); width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-utensils" style="color: white; font-size: 24px;"></i>
+                    </div>
+                    <h1 style="font-size: 28px; font-weight: 800; margin: 0; color: #1f2937;">Flavor<span style="color: #f97316;">Bites</span></h1>
+                </div>
+                <p style="color: #6b7280; margin-top: 8px;">Fresh & Fast Delivery • Real Food, Drinks & Snacks</p>
+            </div>
+            
+            <!-- Invoice Metadata -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 14px; background: #f9fafb; padding: 12px; border-radius: 12px;">
+                <div><strong>Invoice #:</strong> ${invoiceNumber}</div>
+                <div><strong>Date:</strong> ${orderDate}</div>
+            </div>
+            
+            <!-- Items Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                <thead>
+                    <tr style="background: #fef3c7; color: #1f2937;">
+                        <th style="padding: 12px 5px; text-align: left;">Item</th>
+                        <th style="padding: 12px 5px; text-align: center;">Qty</th>
+                        <th style="padding: 12px 5px; text-align: right;">Unit Price</th>
+                        <th style="padding: 12px 5px; text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHTML}
+                </tbody>
+            </table>
+            
+            <!-- Totals (No delivery fee) -->
+            <div style="border-top: 2px solid #e5e7eb; padding-top: 15px; width: 100%; display: flex; flex-direction: column; align-items: flex-end;">
+                <div style="width: 280px;">
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                        <span style="font-weight: 500;">Subtotal:</span>
+                        <span>$${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px dashed #d1d5db; margin-top: 8px; font-size: 20px; font-weight: 800;">
+                        <span>TOTAL:</span>
+                        <span style="color: #f97316;">$${total.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Thank You & Footer -->
+            <div style="margin-top: 35px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                <p style="font-size: 14px; color: #4b5563;">Thank you for choosing FlavorBites! Your meal will be prepared with care.</p>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">© FlavorBites • Fresh ingredients, bold flavors • Delivery within 30-45 mins</p>
+            </div>
+        </div>
+    `;
+}
+
+function printInvoice() {
+    if (cart.length === 0) {
+        alert("❌ Cannot print invoice. Your cart is empty. Add some delicious items first!");
+        return;
+    }
+    
+    const invoiceHTML = generateInvoiceHTML();
+    if (!invoiceHTML) return;
+    
+    const invoiceContainer = document.getElementById("invoice-print-container");
+    invoiceContainer.innerHTML = invoiceHTML;
+    invoiceContainer.style.display = "block";
+    
+    // Ensure any FontAwesome icons inside print render as text fallback? but we have text.
+    // Force a small delay to ensure DOM is ready then print.
+    setTimeout(() => {
+        window.print();
+        // After print (or cancel) we don't hide container permanently; but we can keep it invisible after print ends.
+        // However, we will hide it again after printing because on print dialog close we set it back.
+        window.onafterprint = function() {
+            invoiceContainer.style.display = "none";
+            invoiceContainer.innerHTML = "";
+            window.onafterprint = null;
+        };
+        // fallback: if afterprint not triggered (some browsers), reset after 2 seconds.
+        setTimeout(() => {
+            if (invoiceContainer.style.display !== "none") {
+                invoiceContainer.style.display = "none";
+                invoiceContainer.innerHTML = "";
+            }
+        }, 5000);
+    }, 100);
+}
+
+// Render menu based on selected category
 function renderMenu(category = "all") {
     let filteredItems = menuItems;
     if (category !== "all") {
@@ -425,7 +574,6 @@ function renderMenu(category = "all") {
     
     menuContainer.innerHTML = filteredItems.map(item => `
         <div class="menu-card bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100">
-            <!-- Perfect square image container (1:1 ratio) -->
             <div class="relative w-full overflow-hidden bg-gray-200" style="aspect-ratio: 1 / 1;">
                 <img src="${item.image}" alt="${item.name}" class="img-square w-full h-full object-cover hover:scale-105 transition duration-500" loading="lazy">
                 <span class="absolute top-2 left-2 badge-new text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md">
@@ -451,7 +599,6 @@ function renderMenu(category = "all") {
         </div>
     `).join('');
     
-    // Attach quantity button events
     document.querySelectorAll('.qty-decrement').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -492,46 +639,39 @@ function renderMenu(category = "all") {
     });
 }
 
-// Category Filter with active state
 function initCategoryFilters() {
     const catTabs = document.querySelectorAll('.category-tab');
     catTabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const category = tab.dataset.category;
             currentCategory = category;
-            
-            // Update active styles
             catTabs.forEach(t => {
                 t.classList.remove('bg-orange-500', 'text-white', 'shadow-md');
                 t.classList.add('bg-gray-200', 'text-gray-700');
             });
             tab.classList.remove('bg-gray-200', 'text-gray-700');
             tab.classList.add('bg-orange-500', 'text-white', 'shadow-md');
-            
             renderMenu(category);
         });
     });
 }
 
-// Global functions for cart buttons (required for onclick in dynamic cart)
+// Global functions for cart buttons
 window.updateQuantity = updateQuantity;
 window.removeItemCompletely = removeItemCompletely;
 
-// Initialize event listeners
 function initEventListeners() {
     checkoutBtn.addEventListener("click", checkout);
     clearCartBtn.addEventListener("click", clearCart);
+    printInvoiceBtn.addEventListener("click", printInvoice);
 }
 
-// Initialize the whole app: load persisted cart, render menu, setup filters, update UI
 function init() {
-    loadCartFromLocalStorage();   // load existing cart from storage
-    renderMenu("all");            // render full menu
-    initCategoryFilters();        // setup category switching
-    initEventListeners();         // checkout & clear cart
-    updateCartUI();               // reflect cart (if any stored items)
-    
-    // Ensure "All" tab is active after load
+    loadCartFromLocalStorage();
+    renderMenu("all");
+    initCategoryFilters();
+    initEventListeners();
+    updateCartUI();
     const allTab = document.querySelector('.category-tab[data-category="all"]');
     if (allTab) {
         document.querySelectorAll('.category-tab').forEach(t => {
@@ -543,7 +683,6 @@ function init() {
     }
 }
 
-// Start application
 init();
 </script>
 </body>
