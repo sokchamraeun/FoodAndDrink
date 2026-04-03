@@ -134,6 +134,14 @@
         #invoice-print-container {
             display: none;
         }
+        /* Table number input style */
+        .table-input {
+            transition: all 0.2s;
+        }
+        .table-input:focus {
+            border-color: #f97316;
+            ring: 2px solid #f97316;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
@@ -174,7 +182,7 @@
         </div>
     </div>
 
-    <!-- Cart Section - Sticky on desktop, NO delivery fee, NO numeric table style (clean layout) -->
+    <!-- Cart Section - Sticky on desktop, NO delivery fee, with TABLE NUMBER input -->
     <div class="w-full lg:w-96 no-print">
         <div class="bg-white rounded-2xl shadow-xl sticky top-24 overflow-hidden border border-gray-100">
             <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-5 py-4">
@@ -183,6 +191,16 @@
                     Your Cart
                     <span id="cartItemCount" class="bg-white text-orange-600 text-xs px-2 py-0.5 rounded-full ml-2">0</span>
                 </h2>
+            </div>
+            
+            <!-- TABLE NUMBER INPUT SECTION (NEW) -->
+            <div class="px-4 sm:px-5 pt-3 pb-2 bg-orange-50 border-b border-orange-100">
+                <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                    <i class="fas fa-chair text-orange-500 text-xs"></i> Table Number (Dine-in)
+                </label>
+                <input type="number" id="tableNumberInput" placeholder="Enter table number" value="" 
+                       class="table-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-500 text-sm">
+                <p class="text-xs text-gray-500 mt-1">Add your table number for dine-in orders</p>
             </div>
             
             <div class="p-4 sm:p-5 max-h-96 overflow-y-auto cart-scrollbar" id="cart-items-container">
@@ -235,7 +253,7 @@
 // ============================================
 // ENHANCED MENU: FOOD, DRINKS, SNACKS with SQUARE IMAGES
 // NO DELIVERY FEE — ONLY SUBTOTAL + TOTAL
-// NEW: PRINT INVOICE TO PDF (fully styled receipt)
+// ADDED: TABLE NUMBER INPUT (saved to localStorage & printed on invoice)
 // ============================================
 const menuItems = [
     // FOOD Category
@@ -266,6 +284,9 @@ const menuItems = [
 // Cart array
 let cart = [];
 
+// Table number variable (new)
+let tableNumber = "";
+
 // DOM Elements
 const menuContainer = document.getElementById("menu");
 const cartItemsList = document.getElementById("cart-items");
@@ -277,12 +298,14 @@ const clearCartBtn = document.getElementById("clearCart");
 const printInvoiceBtn = document.getElementById("printInvoiceBtn");
 const toast = document.getElementById("toast");
 const toastMsg = document.getElementById("toastMsg");
+const tableNumberInput = document.getElementById("tableNumberInput");
 
 let currentCategory = "all";
 
-// ========== LOCALSTORAGE PERSISTENCE ==========
+// ========== LOCALSTORAGE PERSISTENCE (cart + table number) ==========
 function saveCartToLocalStorage() {
     localStorage.setItem('flavorbites_cart', JSON.stringify(cart));
+    localStorage.setItem('flavorbites_table_number', tableNumber);
 }
 
 function loadCartFromLocalStorage() {
@@ -307,6 +330,16 @@ function loadCartFromLocalStorage() {
         } catch(e) { cart = []; }
     } else {
         cart = [];
+    }
+    
+    // Load table number
+    const storedTable = localStorage.getItem('flavorbites_table_number');
+    if (storedTable !== null && storedTable !== "") {
+        tableNumber = storedTable;
+        if (tableNumberInput) tableNumberInput.value = tableNumber;
+    } else {
+        tableNumber = "";
+        if (tableNumberInput) tableNumberInput.value = "";
     }
 }
 
@@ -449,7 +482,7 @@ function checkout() {
     showToast("🎉 Order placed! Enjoy your meal!");
 }
 
-// ========== PRINT INVOICE / PDF FUNCTIONALITY ==========
+// ========== PRINT INVOICE / PDF FUNCTIONALITY (with table number) ==========
 function generateInvoiceHTML() {
     if (cart.length === 0) {
         alert("🛒 Your cart is empty. Add items before printing invoice.");
@@ -460,12 +493,15 @@ function generateInvoiceHTML() {
     const total = subtotal;
     const orderDate = new Date().toLocaleString();
     const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const currentTableNumber = tableNumberInput ? tableNumberInput.value.trim() : tableNumber;
+    const displayTable = currentTableNumber ? `Table #${currentTableNumber}` : "No table assigned";
     
     let itemsHTML = '';
-    cart.forEach(item => {
+    cart.forEach((item, idx) => {
         const itemTotal = item.price * item.quantity;
         itemsHTML += `
             <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 10px 5px; text-align: left;">${idx+1}</td>
                 <td style="padding: 10px 5px; text-align: left;">${escapeHtml(item.name)}</td>
                 <td style="padding: 10px 5px; text-align: center;">${item.quantity}</td>
                 <td style="padding: 10px 5px; text-align: right;">$${item.price.toFixed(2)}</td>
@@ -487,16 +523,18 @@ function generateInvoiceHTML() {
                 <p style="color: #6b7280; margin-top: 8px;">Fresh & Fast Delivery • Real Food, Drinks & Snacks</p>
             </div>
             
-            <!-- Invoice Metadata -->
+            <!-- Invoice Metadata + Table Number -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 14px; background: #f9fafb; padding: 12px; border-radius: 12px;">
                 <div><strong>Invoice #:</strong> ${invoiceNumber}</div>
                 <div><strong>Date:</strong> ${orderDate}</div>
+                <div><strong><i class="fas fa-chair"></i> ${displayTable}</strong></div>
             </div>
             
             <!-- Items Table -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
                 <thead>
                     <tr style="background: #fef3c7; color: #1f2937;">
+                        <th style="padding: 12px 5px; text-align: left;">#</th>
                         <th style="padding: 12px 5px; text-align: left;">Item</th>
                         <th style="padding: 12px 5px; text-align: center;">Qty</th>
                         <th style="padding: 12px 5px; text-align: right;">Unit Price</th>
@@ -537,6 +575,12 @@ function printInvoice() {
         return;
     }
     
+    // Save current table number from input before printing
+    if (tableNumberInput) {
+        tableNumber = tableNumberInput.value.trim();
+        saveCartToLocalStorage();
+    }
+    
     const invoiceHTML = generateInvoiceHTML();
     if (!invoiceHTML) return;
     
@@ -544,18 +588,13 @@ function printInvoice() {
     invoiceContainer.innerHTML = invoiceHTML;
     invoiceContainer.style.display = "block";
     
-    // Ensure any FontAwesome icons inside print render as text fallback? but we have text.
-    // Force a small delay to ensure DOM is ready then print.
     setTimeout(() => {
         window.print();
-        // After print (or cancel) we don't hide container permanently; but we can keep it invisible after print ends.
-        // However, we will hide it again after printing because on print dialog close we set it back.
         window.onafterprint = function() {
             invoiceContainer.style.display = "none";
             invoiceContainer.innerHTML = "";
             window.onafterprint = null;
         };
-        // fallback: if afterprint not triggered (some browsers), reset after 2 seconds.
         setTimeout(() => {
             if (invoiceContainer.style.display !== "none") {
                 invoiceContainer.style.display = "none";
@@ -656,6 +695,16 @@ function initCategoryFilters() {
     });
 }
 
+// Table number change event: save to localStorage
+function initTableNumberListener() {
+    if (tableNumberInput) {
+        tableNumberInput.addEventListener('input', (e) => {
+            tableNumber = e.target.value.trim();
+            saveCartToLocalStorage();
+        });
+    }
+}
+
 // Global functions for cart buttons
 window.updateQuantity = updateQuantity;
 window.removeItemCompletely = removeItemCompletely;
@@ -671,6 +720,7 @@ function init() {
     renderMenu("all");
     initCategoryFilters();
     initEventListeners();
+    initTableNumberListener();
     updateCartUI();
     const allTab = document.querySelector('.category-tab[data-category="all"]');
     if (allTab) {
