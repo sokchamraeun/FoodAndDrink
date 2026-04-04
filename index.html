@@ -3,36 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>FlavorBites | Food, Drinks & Snacks Menu with Cart & Invoice</title>
+    <title>Café Harmony | Artisan Food & Coffee with Sidebar Cart</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
         }
-        /* Smooth animations */
+        :root {
+            --cafe-cream: #FDF7F0;
+            --cafe-brown: #C28B5E;
+            --cafe-dark: #9B6A44;
+            --cafe-wood: #7E583B;
+            --cafe-mocha: #EEDDCB;
+            --cafe-espresso: #4A2C2A;
+            --cafe-warm: #FEF0E3;
+        }
+        body {
+            background: var(--cafe-cream);
+        }
         .cart-item-enter {
             animation: slideIn 0.3s ease forwards;
         }
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         .menu-card {
             transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            cursor: pointer;
         }
         .menu-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 25px -8px rgba(0,0,0,0.15);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 30px -12px rgba(0,0,0,0.12);
         }
         .quantity-btn {
             transition: all 0.15s ease;
@@ -42,9 +46,9 @@
             transform: scale(0.92);
         }
         .category-active {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            color: white;
-            box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+            background: var(--cafe-brown) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(194, 139, 94, 0.35);
         }
         ::-webkit-scrollbar {
             width: 5px;
@@ -54,16 +58,14 @@
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #f97316;
+            background: var(--cafe-brown);
             border-radius: 10px;
         }
-        /* Square image container - perfect 1:1 ratio */
         .img-square {
             aspect-ratio: 1 / 1;
             width: 100%;
             object-fit: cover;
         }
-        /* Mobile optimizations: 2 columns on small screens, 3 on larger */
         @media (max-width: 640px) {
             .menu-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -80,13 +82,12 @@
                 grid-template-columns: repeat(3, 1fr);
             }
         }
-        .badge-new {
-            background: linear-gradient(135deg, #f97316, #f59e0b);
+        .badge-cafe {
+            background: linear-gradient(135deg, var(--cafe-brown), var(--cafe-dark));
         }
         button:active {
             transform: scale(0.97);
         }
-        /* Hide number input spinners for cleaner look */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button {
             opacity: 0.5;
@@ -94,15 +95,48 @@
         .cart-scrollbar {
             scrollbar-width: thin;
         }
-
-        /* PRINT INVOICE STYLES - HIDE EVERYTHING EXCEPT INVOICE CONTAINER */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.2s ease;
+        }
+        /* SIDEBAR CART STYLES */
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            background: white;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .cart-sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+ backdrop-filter: blur(3px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+        .sidebar-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            #invoice-print-container, #invoice-print-container * {
-                visibility: visible;
-            }
+            body * { visibility: hidden; }
+            #invoice-print-container, #invoice-print-container * { visibility: visible; }
             #invoice-print-container {
                 position: fixed;
                 top: 0;
@@ -115,624 +149,493 @@
                 box-shadow: none;
                 z-index: 9999;
             }
-            /* Ensure background colors print */
-            .print-bg-orange {
+            .print-bg-cafe {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
             button, .no-print, header, .category-tab, .menu-grid, .cart-section-actions, 
-            #clearCart, #checkout, #printInvoiceBtn, .sticky, footer, .cart-scrollbar {
+            #clearCart, #checkout, #printInvoiceBtn, .sticky, footer, .cart-scrollbar, .modal-overlay,
+            .cart-sidebar, .sidebar-backdrop {
                 display: none !important;
             }
-            body {
-                margin: 0;
-                padding: 0;
-                background: white;
-            }
+            body { margin: 0; padding: 0; background: white; }
         }
-        /* Invoice container hidden by default */
-        #invoice-print-container {
-            display: none;
-        }
-        /* Table number input style */
-        .table-input {
-            transition: all 0.2s;
-        }
+        #invoice-print-container { display: none; }
         .table-input:focus {
-            border-color: #f97316;
-            ring: 2px solid #f97316;
+            border-color: var(--cafe-brown);
+            ring: 2px solid var(--cafe-brown);
+        }
+        .modal-card {
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .cafe-btn {
+            background: linear-gradient(135deg, var(--cafe-brown), var(--cafe-dark));
+        }
+        .cafe-btn:hover {
+            background: linear-gradient(135deg, var(--cafe-dark), #8B5A3C);
+        }
+        .header-cart-icon {
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        .header-cart-icon:hover {
+            transform: scale(1.05);
+        }
+        /* Sidebar internal scroll */
+        .sidebar-cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
+<body class="bg-[#FDF7F0] font-sans">
 
-<!-- Header (hidden on print) -->
-<header class="bg-white shadow-md sticky top-0 z-20 border-b border-orange-100 no-print">
+<!-- Backdrop for sidebar -->
+<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+<!-- Sidebar Cart (right drawer) -->
+<div id="cartSidebar" class="cart-sidebar">
+    <div class="bg-gradient-to-r from-[#C28B5E] to-[#9B6A44] px-5 py-4 flex justify-between items-center">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-shopping-bag"></i> 
+            Your Order
+            <span id="sidebarCartCount" class="bg-white text-[#C28B5E] text-xs px-2 py-0.5 rounded-full ml-2">0</span>
+        </h2>
+        <button id="closeSidebarBtn" class="text-white text-2xl leading-none hover:opacity-80 transition">&times;</button>
+    </div>
+    
+    <div class="px-5 pt-4 pb-2 bg-[#FEF0E3] border-b border-[#EEDDCB]">
+        <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+            <i class="fas fa-chair text-[#C28B5E] text-xs"></i> Table / Seat (Dine-in)
+        </label>
+        <input type="number" id="sidebarTableNumber" placeholder="Enter table number" value="" 
+               class="table-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C28B5E] focus:border-[#C28B5E] text-sm">
+        <p class="text-xs text-gray-500 mt-1">Add table number for personalized service</p>
+    </div>
+    
+    <div class="sidebar-cart-items" id="sidebar-cart-items-container">
+        <ul id="sidebar-cart-list" class="space-y-3">
+            <li class="text-center text-gray-400 py-10 flex flex-col items-center gap-2">
+                <i class="fas fa-mug-saucer text-5xl opacity-40"></i>
+                <p class="text-sm">Your basket is empty</p>
+                <p class="text-xs">Tap any item to add</p>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="border-t border-gray-100 p-5 bg-gray-50">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-gray-600 font-medium">Subtotal</span>
+            <span class="text-gray-800 font-semibold text-lg" id="sidebarSubtotal">$0.00</span>
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+            <span class="text-base font-bold text-gray-800">Total</span>
+            <span class="text-2xl font-extrabold text-[#C28B5E]" id="sidebarTotal">$0.00</span>
+        </div>
+        <button id="sidebarCheckout" class="mt-5 w-full cafe-btn text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
+            <i class="fas fa-credit-card"></i> Checkout
+        </button>
+        <div class="flex gap-2 mt-2">
+            <button id="sidebarClearCart" class="flex-1 text-gray-500 text-sm hover:text-red-500 transition py-2 bg-gray-100 rounded-lg flex items-center justify-center gap-1">
+                <i class="fas fa-trash-alt text-xs"></i> Clear
+            </button>
+            <button id="sidebarPrintInvoice" class="flex-1 text-gray-500 text-sm hover:text-[#C28B5E] transition py-2 bg-gray-100 rounded-lg flex items-center justify-center gap-1">
+                <i class="fas fa-receipt"></i> Print Invoice
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Header with cafe styling + cart icon that opens sidebar -->
+<header class="bg-white shadow-md sticky top-0 z-20 border-b border-[#EEDDCB] no-print">
     <div class="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
-                <i class="fas fa-utensils text-white text-xl"></i>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-[#C28B5E] to-[#9B6A44] flex items-center justify-center shadow-md">
+                <i class="fas fa-mug-hot text-white text-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl sm:text-2xl font-extrabold text-gray-800">Flavor<span class="text-orange-500">Bites</span></h1>
-                <p class="text-xs text-gray-500 hidden sm:block">Real food · Drinks · Snacks</p>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-gray-800">Café<span class="text-[#C28B5E]">Harmony</span></h1>
+                <p class="text-xs text-gray-500 hidden sm:block">Artisan coffee · Fresh bakes · Cozy bites</p>
             </div>
         </div>
-        <div class="bg-orange-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full">
-            <i class="fas fa-truck-fast text-orange-500 mr-1 sm:mr-2"></i>
-            <span class="text-xs sm:text-sm font-medium text-gray-700">Fresh & Fast</span>
+        <div class="flex items-center gap-3">
+            <div class="bg-[#FEF0E3] px-3 py-1.5 sm:px-4 sm:py-2 rounded-full">
+                <i class="fas fa-seedling text-[#C28B5E] mr-1 sm:mr-2"></i>
+                <span class="text-xs sm:text-sm font-medium text-gray-700">Cafe fresh daily</span>
+            </div>
+            <!-- Shopping Cart Icon in Navbar (opens sidebar) -->
+            <button id="openCartSidebarBtn" class="relative bg-[#FEF0E3] hover:bg-[#EEDDCB] transition rounded-full p-2 sm:p-2.5 header-cart-icon">
+                <i class="fas fa-shopping-bag text-[#C28B5E] text-lg sm:text-xl"></i>
+                <span id="headerCartCount" class="absolute -top-1 -right-1 bg-[#C28B5E] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm">0</span>
+            </button>
         </div>
     </div>
 </header>
 
-<div class="container mx-auto px-3 sm:px-4 py-6 flex flex-col lg:flex-row gap-6 no-print">
-    
-    <!-- Menu Section -->
+<div class="container mx-auto px-3 sm:px-4 py-6 no-print">
     <div class="flex-1">
-        <!-- Category Tabs -->
         <div class="flex flex-wrap gap-2 sm:gap-3 mb-6 justify-center sm:justify-start">
-            <button data-category="all" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-orange-500 text-white shadow-md">🍽️ All</button>
-            <button data-category="food" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-orange-100">🍔 Food</button>
-            <button data-category="drink" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-orange-100">🥤 Drinks</button>
-            <button data-category="snack" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-orange-100">🍿 Snacks</button>
+            <button data-category="all" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-[#C28B5E] text-white shadow-md">🍽️ All</button>
+            <button data-category="food" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-[#EEDDCB]">🍔 Food</button>
+            <button data-category="drink" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-[#EEDDCB]">🥤 Drinks</button>
+            <button data-category="snack" class="category-tab px-4 sm:px-5 py-2 rounded-full text-sm sm:text-base font-medium transition-all bg-gray-200 text-gray-700 hover:bg-[#EEDDCB]">🍰 Snacks</button>
         </div>
-        
-        <div id="menu" class="menu-grid grid gap-4 sm:gap-5">
-            <!-- Dynamic menu items injected here -->
-        </div>
-    </div>
-
-    <!-- Cart Section - Sticky on desktop, NO delivery fee, with TABLE NUMBER input -->
-    <div class="w-full lg:w-96 no-print">
-        <div class="bg-white rounded-2xl shadow-xl sticky top-24 overflow-hidden border border-gray-100">
-            <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-4 sm:px-5 py-4">
-                <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                    <i class="fas fa-shopping-cart"></i> 
-                    Your Cart
-                    <span id="cartItemCount" class="bg-white text-orange-600 text-xs px-2 py-0.5 rounded-full ml-2">0</span>
-                </h2>
-            </div>
-            
-            <!-- TABLE NUMBER INPUT SECTION (NEW) -->
-            <div class="px-4 sm:px-5 pt-3 pb-2 bg-orange-50 border-b border-orange-100">
-                <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                    <i class="fas fa-chair text-orange-500 text-xs"></i> Table Number (Dine-in)
-                </label>
-                <input type="number" id="tableNumberInput" placeholder="Enter table number" value="" 
-                       class="table-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-500 text-sm">
-                <p class="text-xs text-gray-500 mt-1">Add your table number for dine-in orders</p>
-            </div>
-            
-            <div class="p-4 sm:p-5 max-h-96 overflow-y-auto cart-scrollbar" id="cart-items-container">
-                <ul id="cart-items" class="space-y-3">
-                    <li class="text-center text-gray-400 py-8 flex flex-col items-center gap-2">
-                        <i class="fas fa-shopping-basket text-4xl opacity-40"></i>
-                        <p class="text-sm">Your cart is empty</p>
-                        <p class="text-xs">Add delicious items!</p>
-                    </li>
-                </ul>
-            </div>
-            
-            <!-- Cart summary: Subtotal and Total ONLY (NO DELIVERY FEE) -->
-            <div class="border-t border-gray-100 p-4 sm:p-5 bg-gray-50">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-gray-600 font-medium">Subtotal</span>
-                    <span class="text-gray-800 font-semibold text-lg" id="subtotal-price">$0.00</span>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span class="text-base sm:text-lg font-bold text-gray-800">Total</span>
-                    <span class="text-xl sm:text-2xl font-extrabold text-orange-600" id="total-price">$0.00</span>
-                </div>
-                <button id="checkout" class="mt-5 w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
-                    <i class="fas fa-credit-card"></i> Checkout Now
-                </button>
-                <div class="flex gap-2 mt-2">
-                    <button id="clearCart" class="flex-1 text-gray-500 text-sm hover:text-red-500 transition py-2 bg-gray-100 rounded-lg flex items-center justify-center gap-1">
-                        <i class="fas fa-trash-alt text-xs"></i> Clear
-                    </button>
-                    <button id="printInvoiceBtn" class="flex-1 text-gray-500 text-sm hover:text-orange-600 transition py-2 bg-gray-100 rounded-lg flex items-center justify-center gap-1">
-                        <i class="fas fa-file-pdf"></i> Print Invoice
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div id="menu" class="menu-grid grid gap-4 sm:gap-5"></div>
     </div>
 </div>
 
-<!-- Toast Message -->
-<div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-5 py-2.5 rounded-full shadow-lg z-50 hidden transition-all duration-300 flex items-center gap-2 text-sm sm:text-base no-print">
+<div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-[#C28B5E] text-white px-5 py-2.5 rounded-full shadow-lg z-50 hidden transition-all duration-300 flex items-center gap-2 text-sm sm:text-base no-print">
     <i class="fas fa-check-circle"></i> <span id="toastMsg">Added to cart!</span>
 </div>
 
-<!-- PRINT INVOICE CONTAINER (hidden normally, visible only when printing) -->
-<div id="invoice-print-container">
-    <!-- Dynamic invoice content will be injected here -->
+<div id="productModal" class="fixed inset-0 z-[1100] hidden items-center justify-center p-4 transition-all">
+    <div class="absolute inset-0 modal-overlay bg-black/60 backdrop-blur-sm" id="modalBackdrop"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full modal-card transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+        <div class="relative">
+            <button id="closeModalBtn" class="absolute top-3 right-3 bg-white/80 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center text-gray-600 hover:text-[#C28B5E] z-10 shadow-md transition">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="modalImageContainer" class="w-full h-56 overflow-hidden rounded-t-2xl bg-[#FEF0E3]">
+                <img id="modalImg" src="" alt="" class="w-full h-full object-cover">
+            </div>
+            <div class="p-5">
+                <div class="flex justify-between items-start gap-2">
+                    <h3 id="modalName" class="text-2xl font-bold text-gray-800">Product Name</h3>
+                    <span id="modalBadge" class="badge-cafe text-white text-xs font-bold px-2 py-1 rounded-full">🔥</span>
+                </div>
+                <p id="modalDesc" class="text-gray-500 text-sm mt-2 leading-relaxed">Delightful cafe specialty crafted with love and fresh ingredients.</p>
+                <div class="mt-4 flex items-center justify-between">
+                    <span id="modalPrice" class="text-2xl font-extrabold text-[#C28B5E]">$0.00</span>
+                    <div class="flex items-center gap-3 bg-gray-100 rounded-full px-3 py-1.5">
+                        <button id="modalQtyDec" class="w-7 h-7 rounded-full bg-white shadow text-gray-600 font-bold hover:bg-[#C28B5E] hover:text-white transition">-</button>
+                        <input type="number" id="modalQty" value="1" min="1" class="w-12 text-center bg-transparent font-semibold focus:outline-none">
+                        <button id="modalQtyInc" class="w-7 h-7 rounded-full bg-white shadow text-gray-600 font-bold hover:bg-[#C28B5E] hover:text-white transition">+</button>
+                    </div>
+                </div>
+                <button id="modalAddToCart" class="mt-6 w-full cafe-btn text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition hover:shadow-md">
+                    <i class="fas fa-cart-plus"></i> Add to Order
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
+<div id="invoice-print-container"></div>
+
 <script>
-// ============================================
-// ENHANCED MENU: FOOD, DRINKS, SNACKS with SQUARE IMAGES
-// NO DELIVERY FEE — ONLY SUBTOTAL + TOTAL
-// ADDED: TABLE NUMBER INPUT (saved to localStorage & printed on invoice)
-// ============================================
 const menuItems = [
-    // FOOD Category
-    { id: 1, name: "Classic Cheeseburger", price: 6.99, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop", category: "food", badge: "🔥 Bestseller" },
-    { id: 2, name: "Pepperoni Pizza", price: 4.49, image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=400&fit=crop", category: "food", badge: "⭐ Popular" },
-    { id: 3, name: "BBQ Chicken Burger", price: 7.99, image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=400&fit=crop", category: "food", badge: "🔥 BBQ" },
-    { id: 4, name: "Margherita Pizza", price: 12.99, image: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=400&h=400&fit=crop", category: "food", badge: "🍕 Classic" },
-    { id: 5, name: "Spicy Chicken Wings", price: 8.99, image: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=400&h=400&fit=crop", category: "food", badge: "🌶️ Spicy" },
-    { id: 6, name: "Caesar Salad", price: 7.49, image: "https://images.unsplash.com/photo-1550304943-4f24f54dd8a9?w=400&h=400&fit=crop", category: "food", badge: "🥗 Healthy" },
-    
-    // DRINKS Category
-    { id: 7, name: "Iced Caramel Latte", price: 5.49, image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop", category: "drink", badge: "☕ Cold Brew" },
-    { id: 8, name: "Fresh Orange Juice", price: 3.99, image: "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&h=400&fit=crop", category: "drink", badge: "🍊 Fresh" },
-    { id: 9, name: "Matcha Latte", price: 4.99, image: "https://images.unsplash.com/photo-1534777367038-9404f45b869b?w=400&h=400&fit=crop", category: "drink", badge: "🍵 Premium" },
-    { id: 10, name: "Strawberry Smoothie", price: 5.99, image: "https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=400&fit=crop", category: "drink", badge: "🍓 Fruity" },
-    { id: 11, name: "Classic Coke", price: 2.49, image: "https://images.unsplash.com/photo-1554866585-cd9481ca13b0?w=400&h=400&fit=crop", category: "drink", badge: "🥤 Refreshing" },
-    { id: 12, name: "Mango Lassi", price: 4.49, image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=400&fit=crop", category: "drink", badge: "🥭 Creamy" },
-    
-    // SNACKS Category
-    { id: 13, name: "Crispy French Fries", price: 3.49, image: "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=400&h=400&fit=crop", category: "snack", badge: "🥔 Crispy" },
-    { id: 14, name: "Chocolate Lava Cake", price: 5.99, image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=400&fit=crop", category: "snack", badge: "🍫 Decadent" },
-    { id: 15, name: "New York Cheesecake", price: 6.49, image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=400&fit=crop", category: "snack", badge: "🍰 Creamy" },
-    { id: 16, name: "Garlic Bread Sticks", price: 4.29, image: "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=400&h=400&fit=crop", category: "snack", badge: "🧄 Savory" },
-    { id: 17, name: "Onion Rings", price: 4.99, image: "https://images.unsplash.com/photo-1639024471283-035188dd12ef?w=400&h=400&fit=crop", category: "snack", badge: "🧅 Crunchy" },
-    { id: 18, name: "Nachos with Cheese", price: 5.49, image: "https://images.unsplash.com/photo-1513456852971-30c0b8199ebe?w=400&h=400&fit=crop", category: "snack", badge: "🧀 Cheesy" }
+    { id: 1, name: "Truffle Mushroom Burger", price: 8.99, image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop", category: "food", badge: "🍄 Chef's Pick", desc: "Juicy beef patty, sautéed mushrooms, truffle aioli, and melted provolone." },
+    { id: 2, name: "Margherita Flatbread", price: 5.49, image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=400&fit=crop", category: "food", badge: "🍅 Classic", desc: "Fresh tomatoes, basil, mozzarella, and a drizzle of balsamic glaze." },
+    { id: 3, name: "Smoked BBQ Chicken", price: 9.49, image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=400&fit=crop", category: "food", badge: "🔥 Smoky", desc: "Grilled chicken with house BBQ sauce, caramelized onions & cheddar." },
+    { id: 4, name: "Mediterranean Bowl", price: 10.99, image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop", category: "food", badge: "🥗 Healthy", desc: "Quinoa, roasted veggies, feta, olives, and lemon herb dressing." },
+    { id: 5, name: "Spicy Harissa Wings", price: 8.49, image: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=400&h=400&fit=crop", category: "food", badge: "🌶️ Spicy", desc: "Crispy wings tossed in house harissa, served with ranch." },
+    { id: 6, name: "Caprese Sandwich", price: 7.99, image: "https://images.unsplash.com/photo-1553909489-cd47e0907980?w=400&h=400&fit=crop", category: "food", badge: "🧀 Fresh", desc: "Ciabatta, fresh mozzarella, tomatoes, pesto, and arugula." },
+    { id: 7, name: "Honey Lavender Latte", price: 5.99, image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop", category: "drink", badge: "🌸 Floral", desc: "Espresso, steamed milk, honey, and organic lavender." },
+    { id: 8, name: "Cold Brew Tonic", price: 4.99, image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=400&h=400&fit=crop", category: "drink", badge: "⚡ Energizer", desc: "Smooth cold brew with tonic water and lemon zest." },
+    { id: 9, name: "Matcha Rose Latte", price: 5.49, image: "https://images.unsplash.com/photo-1534777367038-9404f45b869b?w=400&h=400&fit=crop", category: "drink", badge: "🍵 Premium", desc: "Ceremonial matcha, rose syrup, oat milk, and dried rose petals." },
+    { id: 10, name: "Berry Hibiscus Spritzer", price: 4.79, image: "https://images.unsplash.com/photo-1505252585461-04db1eb84625?w=400&h=400&fit=crop", category: "drink", badge: "🍓 Fruity", desc: "Hibiscus tea, mixed berries, sparkling water, fresh mint." },
+    { id: 11, name: "Salted Caramel Mocha", price: 6.29, image: "https://images.unsplash.com/photo-1578314675249-a6910f80cc4d?w=400&h=400&fit=crop", category: "drink", badge: "🍫 Indulgent", desc: "Rich mocha, caramel, sea salt, topped with whipped cream." },
+    { id: 12, name: "Mango Tango Smoothie", price: 5.99, image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&h=400&fit=crop", category: "drink", badge: "🥭 Tropical", desc: "Mango, banana, coconut milk, and a splash of lime." },
+    { id: 13, name: "Rosemary Garlic Fries", price: 4.29, image: "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=400&h=400&fit=crop", category: "snack", badge: "🥔 Crispy", desc: "Hand-cut fries, rosemary, roasted garlic, parmesan dust." },
+    { id: 14, name: "Molten Chocolate Cake", price: 6.49, image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=400&fit=crop", category: "snack", badge: "🍫 Decadent", desc: "Warm chocolate lava cake with vanilla bean ice cream." },
+    { id: 15, name: "Basque Cheesecake", price: 6.99, image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=400&fit=crop", category: "snack", badge: "🍰 Creamy", desc: "Burnt basque style, creamy center, berry compote." },
+    { id: 16, name: "Garlic Parmesan Knots", price: 4.99, image: "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=400&h=400&fit=crop", category: "snack", badge: "🧄 Savory", desc: "Soft dough knots, garlic butter, parmesan, parsley." },
+    { id: 17, name: "Cinnamon Sugar Churros", price: 5.29, image: "https://images.unsplash.com/photo-1624373439657-d1e5236a977a?w=400&h=400&fit=crop", category: "snack", badge: "✨ Sweet", desc: "Crispy churros, cinnamon sugar, dark chocolate dip." },
+    { id: 18, name: "Truffle Popcorn", price: 3.99, image: "https://images.unsplash.com/photo-1606904825846-647eb07f55be?w=400&h=400&fit=crop", category: "snack", badge: "🍿 Gourmet", desc: "Buttered popcorn, white truffle oil, parmesan & herbs." }
 ];
 
-// Cart array
 let cart = [];
-
-// Table number variable (new)
 let tableNumber = "";
 
-// DOM Elements
+// DOM elements
 const menuContainer = document.getElementById("menu");
-const cartItemsList = document.getElementById("cart-items");
-const totalPriceEl = document.getElementById("total-price");
-const subtotalPriceEl = document.getElementById("subtotal-price");
-const cartItemCountSpan = document.getElementById("cartItemCount");
-const checkoutBtn = document.getElementById("checkout");
-const clearCartBtn = document.getElementById("clearCart");
-const printInvoiceBtn = document.getElementById("printInvoiceBtn");
-const toast = document.getElementById("toast");
-const toastMsg = document.getElementById("toastMsg");
-const tableNumberInput = document.getElementById("tableNumberInput");
+const totalPriceEl = document.getElementById("total-price"); // legacy unused but kept
+const headerCartCountSpan = document.getElementById("headerCartCount");
+const toastEl = document.getElementById("toast");
+const toastMsgSpan = document.getElementById("toastMsg");
+const sidebarCartList = document.getElementById("sidebar-cart-list");
+const sidebarSubtotal = document.getElementById("sidebarSubtotal");
+const sidebarTotal = document.getElementById("sidebarTotal");
+const sidebarCartCountSpan = document.getElementById("sidebarCartCount");
+const sidebarTableNumberInput = document.getElementById("sidebarTableNumber");
+const openSidebarBtn = document.getElementById("openCartSidebarBtn");
+const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+const cartSidebar = document.getElementById("cartSidebar");
+const sidebarCheckout = document.getElementById("sidebarCheckout");
+const sidebarClearCart = document.getElementById("sidebarClearCart");
+const sidebarPrintInvoice = document.getElementById("sidebarPrintInvoice");
 
-let currentCategory = "all";
+// Modal elements
+const modal = document.getElementById("productModal");
+const modalImg = document.getElementById("modalImg");
+const modalName = document.getElementById("modalName");
+const modalBadge = document.getElementById("modalBadge");
+const modalDesc = document.getElementById("modalDesc");
+const modalPriceSpan = document.getElementById("modalPrice");
+const modalQtyInput = document.getElementById("modalQty");
+const modalQtyDec = document.getElementById("modalQtyDec");
+const modalQtyInc = document.getElementById("modalQtyInc");
+const modalAddToCartBtn = document.getElementById("modalAddToCart");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modalContentDiv = document.getElementById("modalContent");
 
-// ========== LOCALSTORAGE PERSISTENCE (cart + table number) ==========
+let currentModalProduct = null;
+
+function showToast(message) {
+    toastMsgSpan.textContent = message;
+    toastEl.classList.remove("hidden");
+    setTimeout(() => toastEl.classList.add("hidden"), 2000);
+}
+
 function saveCartToLocalStorage() {
-    localStorage.setItem('flavorbites_cart', JSON.stringify(cart));
-    localStorage.setItem('flavorbites_table_number', tableNumber);
+    localStorage.setItem('cafeharmony_cart', JSON.stringify(cart));
+    localStorage.setItem('cafeharmony_table', tableNumber);
 }
 
 function loadCartFromLocalStorage() {
-    const storedCart = localStorage.getItem('flavorbites_cart');
+    const storedCart = localStorage.getItem('cafeharmony_cart');
     if (storedCart) {
         try {
             const parsed = JSON.parse(storedCart);
-            const validatedCart = parsed.filter(cartItem => menuItems.some(menuItem => menuItem.id === cartItem.id));
-            const syncedCart = validatedCart.map(cartItem => {
+            const validated = parsed.filter(cartItem => menuItems.some(m => m.id === cartItem.id));
+            cart = validated.map(cartItem => {
                 const menuMatch = menuItems.find(m => m.id === cartItem.id);
-                if (menuMatch) {
-                    return {
-                        ...cartItem,
-                        name: menuMatch.name,
-                        price: menuMatch.price,
-                        image: menuMatch.image
-                    };
-                }
+                if (menuMatch) return { ...cartItem, name: menuMatch.name, price: menuMatch.price, image: menuMatch.image };
                 return cartItem;
             });
-            cart = syncedCart;
         } catch(e) { cart = []; }
-    } else {
-        cart = [];
-    }
-    
-    // Load table number
-    const storedTable = localStorage.getItem('flavorbites_table_number');
-    if (storedTable !== null && storedTable !== "") {
-        tableNumber = storedTable;
-        if (tableNumberInput) tableNumberInput.value = tableNumber;
-    } else {
-        tableNumber = "";
-        if (tableNumberInput) tableNumberInput.value = "";
-    }
+    } else { cart = []; }
+    const storedTable = localStorage.getItem('cafeharmony_table');
+    if (storedTable) { tableNumber = storedTable; if(sidebarTableNumberInput) sidebarTableNumberInput.value = tableNumber; }
+    else { tableNumber = ""; if(sidebarTableNumberInput) sidebarTableNumberInput.value = ""; }
 }
 
-function showToast(message) {
-    toastMsg.textContent = message;
-    toast.classList.remove("hidden");
-    setTimeout(() => toast.classList.add("hidden"), 2000);
-}
-
-// Update cart UI (NO DELIVERY FEE: total = subtotal)
 function updateCartUI() {
+    // Update header count
+    const totalItems = cart.reduce((sum, i) => sum + i.quantity, 0);
+    headerCartCountSpan.textContent = totalItems;
+    
     if (cart.length === 0) {
-        cartItemsList.innerHTML = `
-            <li class="text-center text-gray-400 py-8 flex flex-col items-center gap-2">
-                <i class="fas fa-shopping-basket text-4xl opacity-40"></i>
-                <p class="text-sm">Your cart is empty</p>
-                <p class="text-xs">Add delicious items!</p>
-            </li>
-        `;
-        cartItemCountSpan.textContent = "0";
-        subtotalPriceEl.textContent = "$0.00";
-        totalPriceEl.textContent = "$0.00";
+        sidebarCartList.innerHTML = `<li class="text-center text-gray-400 py-10 flex flex-col items-center gap-2">
+                <i class="fas fa-mug-saucer text-5xl opacity-40"></i>
+                <p class="text-sm">Your basket is empty</p>
+                <p class="text-xs">Tap any item to add</p>
+            </li>`;
+        sidebarCartCountSpan.textContent = "0";
+        sidebarSubtotal.textContent = "$0.00";
+        sidebarTotal.textContent = "$0.00";
+        saveCartToLocalStorage();
         return;
     }
     
     let subtotal = 0;
-    let totalItems = 0;
-    
-    cartItemsList.innerHTML = cart.map(item => {
+    let itemsCount = 0;
+    sidebarCartList.innerHTML = cart.map(item => {
         const itemTotal = item.price * item.quantity;
         subtotal += itemTotal;
-        totalItems += item.quantity;
-        return `
-            <li class="cart-item-enter bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <div class="flex gap-3">
-                    <img src="${item.image}" class="w-14 h-14 rounded-lg object-cover shadow-sm" alt="${item.name}" loading="lazy">
-                    <div class="flex-1">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-semibold text-gray-800 text-sm sm:text-base">${escapeHtml(item.name)}</h4>
-                            <button onclick="removeItemCompletely(${item.id})" class="text-gray-400 hover:text-red-500 transition">
-                                <i class="fas fa-trash-alt text-sm"></i>
-                            </button>
-                        </div>
-                        <p class="text-orange-600 font-bold text-sm">$${item.price.toFixed(2)}</p>
-                        <div class="flex items-center gap-2 mt-2">
-                            <button onclick="updateQuantity(${item.id}, -1)" class="quantity-btn w-7 h-7 rounded-full bg-gray-200 hover:bg-orange-500 hover:text-white transition flex items-center justify-center font-bold">-</button>
-                            <span class="w-8 text-center font-medium text-sm">${item.quantity}</span>
-                            <button onclick="updateQuantity(${item.id}, 1)" class="quantity-btn w-7 h-7 rounded-full bg-gray-200 hover:bg-orange-500 hover:text-white transition flex items-center justify-center font-bold">+</button>
-                            <span class="text-sm font-semibold text-gray-700 ml-auto">$${itemTotal.toFixed(2)}</span>
-                        </div>
+        itemsCount += item.quantity;
+        return `<li class="cart-item-enter bg-gray-50 rounded-xl p-3 border border-[#EEDDCB]">
+            <div class="flex gap-3">
+                <img src="${item.image}" class="w-14 h-14 rounded-lg object-cover shadow-sm" alt="${item.name}">
+                <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-semibold text-gray-800 text-sm sm:text-base">${escapeHtml(item.name)}</h4>
+                        <button onclick="removeItemCompletely(${item.id})" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-trash-alt text-sm"></i></button>
+                    </div>
+                    <p class="text-[#C28B5E] font-bold text-sm">$${item.price.toFixed(2)}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <button onclick="updateQuantity(${item.id}, -1)" class="quantity-btn w-7 h-7 rounded-full bg-gray-200 hover:bg-[#C28B5E] hover:text-white transition flex items-center justify-center font-bold">-</button>
+                        <span class="w-8 text-center font-medium text-sm">${item.quantity}</span>
+                        <button onclick="updateQuantity(${item.id}, 1)" class="quantity-btn w-7 h-7 rounded-full bg-gray-200 hover:bg-[#C28B5E] hover:text-white transition flex items-center justify-center font-bold">+</button>
+                        <span class="text-sm font-semibold text-gray-700 ml-auto">$${itemTotal.toFixed(2)}</span>
                     </div>
                 </div>
-            </li>
-        `;
+            </div>
+        </li>`;
     }).join('');
     
-    subtotalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
-    totalPriceEl.textContent = `$${subtotal.toFixed(2)}`;
-    cartItemCountSpan.textContent = totalItems;
+    sidebarSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+    sidebarTotal.textContent = `$${subtotal.toFixed(2)}`;
+    sidebarCartCountSpan.textContent = itemsCount;
     saveCartToLocalStorage();
 }
 
-function escapeHtml(str) {
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
+function escapeHtml(str) { return str.replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
 
 function addToCart(id, quantity = 1) {
     const menuItem = menuItems.find(item => item.id === id);
     if (!menuItem) return;
-    
-    const existingItem = cart.find(item => item.id === id);
-    if (existingItem) {
-        existingItem.quantity += quantity;
-    } else {
-        cart.push({
-            id: menuItem.id,
-            name: menuItem.name,
-            price: menuItem.price,
-            quantity: quantity,
-            image: menuItem.image
-        });
-    }
+    const existing = cart.find(item => item.id === id);
+    if (existing) existing.quantity += quantity;
+    else cart.push({ id: menuItem.id, name: menuItem.name, price: menuItem.price, quantity, image: menuItem.image });
     updateCartUI();
-    showToast(`✓ ${menuItem.name} added!`);
-    const cartHeader = document.querySelector('.bg-gradient-to-r.from-orange-500');
-    if (cartHeader) {
-        cartHeader.style.transform = 'scale(1.02)';
-        setTimeout(() => { if(cartHeader) cartHeader.style.transform = 'scale(1)'; }, 200);
-    }
+    showToast(`✨ ${menuItem.name} added to basket`);
 }
 
 function updateQuantity(id, delta) {
     const item = cart.find(i => i.id === id);
     if (item) {
-        const newQuantity = item.quantity + delta;
-        if (newQuantity <= 0) {
-            removeItemCompletely(id);
-        } else {
-            item.quantity = newQuantity;
-            updateCartUI();
-        }
+        const newQ = item.quantity + delta;
+        if (newQ <= 0) removeItemCompletely(id);
+        else { item.quantity = newQ; updateCartUI(); }
     }
 }
+window.updateQuantity = updateQuantity;
+window.removeItemCompletely = function(id) { cart = cart.filter(i => i.id !== id); updateCartUI(); showToast("Item removed"); };
 
-function removeItemCompletely(id) {
-    cart = cart.filter(item => item.id !== id);
-    updateCartUI();
-    showToast(`Item removed`);
-}
-
-function clearCart() {
-    if (cart.length === 0) {
-        showToast("Cart already empty");
-        return;
-    }
-    if (confirm("Clear your entire cart?")) {
-        cart = [];
-        updateCartUI();
-        showToast("🛒 Cart cleared");
-    }
-}
-
+function clearCart() { if(cart.length && confirm("Clear entire basket?")) { cart = []; updateCartUI(); showToast("🧺 Basket cleared"); } else if(!cart.length) showToast("Basket already empty"); }
 function checkout() {
-    if (cart.length === 0) {
-        alert("❌ Your cart is empty! Please add some delicious items.");
-        return;
-    }
-    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-    const total = subtotal;
-    let orderSummary = cart.map(i => `${i.name} x${i.quantity} = $${(i.price * i.quantity).toFixed(2)}`).join('\n');
-    alert(`🍽️ ORDER SUMMARY 🍽️\n\n${orderSummary}\n\nSubtotal: $${subtotal.toFixed(2)}\n━━━━━━━━━━━━━━\nTOTAL: $${total.toFixed(2)}\n\nThank you for ordering from FlavorBites!\nYour food will be prepared fresh and delivered soon! 🚚`);
-    console.log("Order placed:", { cart, total, timestamp: new Date().toISOString() });
-    cart = [];
-    updateCartUI();
-    showToast("🎉 Order placed! Enjoy your meal!");
+    if(!cart.length) return alert("❌ Your basket is empty, add some cafe treats!");
+    const subtotal = cart.reduce((s,i)=> s + (i.price*i.quantity),0);
+    alert(`☕ CAFE ORDER ☕\n\n${cart.map(i=>`${i.name} x${i.quantity} = $${(i.price*i.quantity).toFixed(2)}`).join('\n')}\n\nSubtotal: $${subtotal.toFixed(2)}\nTOTAL: $${subtotal.toFixed(2)}\n\nThank you for visiting Café Harmony!`);
+    cart = []; updateCartUI(); showToast("🎉 Order placed! Enjoy your meal");
+    closeSidebar();
 }
 
-// ========== PRINT INVOICE / PDF FUNCTIONALITY (with table number) ==========
 function generateInvoiceHTML() {
-    if (cart.length === 0) {
-        alert("🛒 Your cart is empty. Add items before printing invoice.");
-        return null;
-    }
-    
-    const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-    const total = subtotal;
-    const orderDate = new Date().toLocaleString();
-    const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const currentTableNumber = tableNumberInput ? tableNumberInput.value.trim() : tableNumber;
-    const displayTable = currentTableNumber ? `Table #${currentTableNumber}` : "No table assigned";
-    
-    let itemsHTML = '';
-    cart.forEach((item, idx) => {
-        const itemTotal = item.price * item.quantity;
-        itemsHTML += `
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 10px 5px; text-align: left;">${idx+1}</td>
-                <td style="padding: 10px 5px; text-align: left;">${escapeHtml(item.name)}</td>
-                <td style="padding: 10px 5px; text-align: center;">${item.quantity}</td>
-                <td style="padding: 10px 5px; text-align: right;">$${item.price.toFixed(2)}</td>
-                <td style="padding: 10px 5px; text-align: right;">$${itemTotal.toFixed(2)}</td>
-            </tr>
-        `;
-    });
-    
-    return `
-        <div style="max-width: 800px; margin: 0 auto; background: white; font-family: 'Inter', sans-serif; padding: 20px;">
-            <!-- Header Section -->
-            <div style="text-align: center; border-bottom: 2px solid #f97316; padding-bottom: 15px; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-                    <div style="background: linear-gradient(135deg, #f97316, #ea580c); width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-utensils" style="color: white; font-size: 24px;"></i>
-                    </div>
-                    <h1 style="font-size: 28px; font-weight: 800; margin: 0; color: #1f2937;">Flavor<span style="color: #f97316;">Bites</span></h1>
-                </div>
-                <p style="color: #6b7280; margin-top: 8px;">Fresh & Fast Delivery • Real Food, Drinks & Snacks</p>
-            </div>
-            
-            <!-- Invoice Metadata + Table Number -->
-            <div style="display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 14px; background: #f9fafb; padding: 12px; border-radius: 12px;">
-                <div><strong>Invoice #:</strong> ${invoiceNumber}</div>
-                <div><strong>Date:</strong> ${orderDate}</div>
-                <div><strong><i class="fas fa-chair"></i> ${displayTable}</strong></div>
-            </div>
-            
-            <!-- Items Table -->
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-                <thead>
-                    <tr style="background: #fef3c7; color: #1f2937;">
-                        <th style="padding: 12px 5px; text-align: left;">#</th>
-                        <th style="padding: 12px 5px; text-align: left;">Item</th>
-                        <th style="padding: 12px 5px; text-align: center;">Qty</th>
-                        <th style="padding: 12px 5px; text-align: right;">Unit Price</th>
-                        <th style="padding: 12px 5px; text-align: right;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHTML}
-                </tbody>
-            </table>
-            
-            <!-- Totals (No delivery fee) -->
-            <div style="border-top: 2px solid #e5e7eb; padding-top: 15px; width: 100%; display: flex; flex-direction: column; align-items: flex-end;">
-                <div style="width: 280px;">
-                    <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                        <span style="font-weight: 500;">Subtotal:</span>
-                        <span>$${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px dashed #d1d5db; margin-top: 8px; font-size: 20px; font-weight: 800;">
-                        <span>TOTAL:</span>
-                        <span style="color: #f97316;">$${total.toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Thank You & Footer -->
-            <div style="margin-top: 35px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-                <p style="font-size: 14px; color: #4b5563;">Thank you for choosing FlavorBites! Your meal will be prepared with care.</p>
-                <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">© FlavorBites • Fresh ingredients, bold flavors • Delivery within 30-45 mins</p>
-            </div>
-        </div>
-    `;
+    if(!cart.length) return null;
+    const subtotal = cart.reduce((s,i)=> s + (i.price*i.quantity),0);
+    const date = new Date().toLocaleString();
+    const invNo = `INV-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+    const displayTable = sidebarTableNumberInput?.value.trim() || tableNumber || "No table";
+    let itemsHTML = cart.map((item,idx)=>`<tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 5px;">${idx+1}</td><td style="padding:8px 5px;">${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">$${item.price.toFixed(2)}</td><td style="text-align:right">$${(item.price*item.quantity).toFixed(2)}</td></tr>`).join('');
+    return `<div style="max-width:800px;margin:0 auto;background:white;font-family:Inter;padding:20px;"><div style="text-align:center;border-bottom:2px solid #C28B5E;"><h1 style="font-size:28px;font-weight:800;">Café<span style="color:#C28B5E;">Harmony</span></h1><p>Artisan coffee & fresh bites</p></div><div style="display:flex;justify-content:space-between;margin:20px 0;background:#FDF7F0;padding:12px;"><div><strong>Invoice:</strong> ${invNo}</div><div><strong>Date:</strong> ${date}</div><div><strong>Table:</strong> ${displayTable}</div></div><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#FEF0E3;"><th>#</th><th>Item</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead><tbody>${itemsHTML}</tbody></table><div style="text-align:right;margin-top:20px;"><div><strong>Subtotal:</strong> $${subtotal.toFixed(2)}</div><div style="font-size:20px;font-weight:800;color:#C28B5E;">TOTAL: $${subtotal.toFixed(2)}</div></div><div style="text-align:center;margin-top:30px;color:#6b7280;">☕ Thank you for visiting! Enjoy your cafe experience 🧁</div></div>`;
 }
-
 function printInvoice() {
-    if (cart.length === 0) {
-        alert("❌ Cannot print invoice. Your cart is empty. Add some delicious items first!");
-        return;
-    }
-    
-    // Save current table number from input before printing
-    if (tableNumberInput) {
-        tableNumber = tableNumberInput.value.trim();
-        saveCartToLocalStorage();
-    }
-    
-    const invoiceHTML = generateInvoiceHTML();
-    if (!invoiceHTML) return;
-    
-    const invoiceContainer = document.getElementById("invoice-print-container");
-    invoiceContainer.innerHTML = invoiceHTML;
-    invoiceContainer.style.display = "block";
-    
-    setTimeout(() => {
-        window.print();
-        window.onafterprint = function() {
-            invoiceContainer.style.display = "none";
-            invoiceContainer.innerHTML = "";
-            window.onafterprint = null;
-        };
-        setTimeout(() => {
-            if (invoiceContainer.style.display !== "none") {
-                invoiceContainer.style.display = "none";
-                invoiceContainer.innerHTML = "";
-            }
-        }, 5000);
-    }, 100);
+    if(!cart.length) return alert("Your basket is empty, add items to print invoice.");
+    if(sidebarTableNumberInput) tableNumber = sidebarTableNumberInput.value.trim();
+    const html = generateInvoiceHTML();
+    if(!html) return;
+    const container = document.getElementById("invoice-print-container");
+    container.innerHTML = html;
+    container.style.display = "block";
+    setTimeout(()=>{ window.print(); window.onafterprint = ()=>{ container.style.display = "none"; container.innerHTML = ""; }; }, 100);
 }
 
-// Render menu based on selected category
+function openSidebar() {
+    cartSidebar.classList.add("open");
+    sidebarBackdrop.classList.add("active");
+    document.body.style.overflow = "hidden";
+}
+function closeSidebar() {
+    cartSidebar.classList.remove("open");
+    sidebarBackdrop.classList.remove("active");
+    document.body.style.overflow = "";
+}
+
 function renderMenu(category = "all") {
-    let filteredItems = menuItems;
-    if (category !== "all") {
-        filteredItems = menuItems.filter(item => item.category === category);
-    }
-    
-    menuContainer.innerHTML = filteredItems.map(item => `
-        <div class="menu-card bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100">
-            <div class="relative w-full overflow-hidden bg-gray-200" style="aspect-ratio: 1 / 1;">
+    let filtered = category === "all" ? menuItems : menuItems.filter(i => i.category === category);
+    menuContainer.innerHTML = filtered.map(item => `
+        <div class="menu-card bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-[#EEDDCB]" data-product-id="${item.id}">
+            <div class="relative w-full overflow-hidden bg-gray-100" style="aspect-ratio: 1 / 1;">
                 <img src="${item.image}" alt="${item.name}" class="img-square w-full h-full object-cover hover:scale-105 transition duration-500" loading="lazy">
-                <span class="absolute top-2 left-2 badge-new text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md">
-                    ${item.badge}
-                </span>
+                <span class="absolute top-2 left-2 badge-cafe text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md">${item.badge}</span>
             </div>
             <div class="p-3 sm:p-4">
                 <div class="flex justify-between items-start gap-1 mb-1">
                     <h3 class="font-bold text-gray-800 text-sm sm:text-base truncate">${escapeHtml(item.name)}</h3>
-                    <span class="text-orange-600 font-extrabold text-sm sm:text-base">$${item.price.toFixed(2)}</span>
+                    <span class="text-[#C28B5E] font-extrabold text-sm sm:text-base">$${item.price.toFixed(2)}</span>
                 </div>
-                <div class="flex items-center gap-2 mt-2 sm:mt-3">
-                    <div class="flex items-center border border-gray-200 rounded-lg bg-gray-50">
-                        <button class="qty-decrement w-7 sm:w-8 h-7 sm:h-8 rounded-l-lg hover:bg-orange-100 text-gray-600 font-bold transition text-sm" data-id="${item.id}">-</button>
-                        <input type="number" id="qty-${item.id}" value="1" min="1" class="w-10 sm:w-12 text-center border-x border-gray-200 py-1 text-xs sm:text-sm font-semibold focus:outline-none bg-white">
-                        <button class="qty-increment w-7 sm:w-8 h-7 sm:h-8 rounded-r-lg hover:bg-orange-100 text-gray-600 font-bold transition text-sm" data-id="${item.id}">+</button>
+                <div class="flex flex-col gap-2 mt-2 sm:mt-3">
+                    <div class="flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50 w-full">
+                        <button class="qty-decrement w-8 h-8 rounded-l-lg hover:bg-[#EEDDCB] text-gray-600 font-bold transition" data-id="${item.id}">-</button>
+                        <input type="number" id="qty-${item.id}" value="1" min="1" class="w-12 text-center border-x border-gray-200 py-1 text-sm font-semibold focus:outline-none bg-white">
+                        <button class="qty-increment w-8 h-8 rounded-r-lg hover:bg-[#EEDDCB] text-gray-600 font-bold transition" data-id="${item.id}">+</button>
                     </div>
-                    <button class="add-to-cart-btn flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-1.5 sm:py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-xs sm:text-sm" data-id="${item.id}">
-                        <i class="fas fa-cart-plus text-xs"></i> Add
+                    <button class="add-to-cart-btn w-full cafe-btn text-white font-semibold py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-sm" data-id="${item.id}">
+                        <i class="fas fa-cart-plus text-xs"></i> Add to Order
                     </button>
                 </div>
             </div>
         </div>
     `).join('');
-    
+
     document.querySelectorAll('.qty-decrement').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = parseInt(btn.dataset.id);
-            const input = document.getElementById(`qty-${id}`);
-            if (input) {
-                let val = parseInt(input.value);
-                if (val > 1) input.value = val - 1;
-            }
-        });
+        btn.addEventListener('click', (e) => { e.stopPropagation(); const id = parseInt(btn.dataset.id); const inp = document.getElementById(`qty-${id}`); if(inp && parseInt(inp.value)>1) inp.value = parseInt(inp.value)-1; });
     });
-    
     document.querySelectorAll('.qty-increment').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = parseInt(btn.dataset.id);
-            const input = document.getElementById(`qty-${id}`);
-            if (input) {
-                let val = parseInt(input.value);
-                input.value = val + 1;
-            }
-        });
+        btn.addEventListener('click', (e) => { e.stopPropagation(); const id = parseInt(btn.dataset.id); const inp = document.getElementById(`qty-${id}`); if(inp) inp.value = parseInt(inp.value)+1; });
     });
-    
     document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = parseInt(btn.dataset.id);
-            const qtyInput = document.getElementById(`qty-${id}`);
-            let quantity = 1;
-            if (qtyInput) quantity = parseInt(qtyInput.value);
-            if (quantity > 0) {
-                addToCart(id, quantity);
-                if (qtyInput) qtyInput.value = 1;
-                btn.style.transform = 'scale(0.96)';
-                setTimeout(() => btn.style.transform = 'scale(1)', 150);
-            }
+        btn.addEventListener('click', (e) => { e.stopPropagation(); const id = parseInt(btn.dataset.id); const qtyInput = document.getElementById(`qty-${id}`); let qty = qtyInput ? parseInt(qtyInput.value) : 1; if(qty>0) { addToCart(id, qty); if(qtyInput) qtyInput.value = 1; } });
+    });
+    document.querySelectorAll('.menu-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if(e.target.closest('.add-to-cart-btn') || e.target.closest('.qty-decrement') || e.target.closest('.qty-increment') || e.target.closest('input')) return;
+            const prodId = parseInt(card.dataset.productId);
+            const product = menuItems.find(p => p.id === prodId);
+            if(product) openProductModal(product);
         });
     });
 }
 
 function initCategoryFilters() {
-    const catTabs = document.querySelectorAll('.category-tab');
-    catTabs.forEach(tab => {
+    const tabs = document.querySelectorAll('.category-tab');
+    tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            const category = tab.dataset.category;
-            currentCategory = category;
-            catTabs.forEach(t => {
-                t.classList.remove('bg-orange-500', 'text-white', 'shadow-md');
-                t.classList.add('bg-gray-200', 'text-gray-700');
-            });
-            tab.classList.remove('bg-gray-200', 'text-gray-700');
-            tab.classList.add('bg-orange-500', 'text-white', 'shadow-md');
-            renderMenu(category);
+            const cat = tab.dataset.category;
+            tabs.forEach(t => { t.classList.remove('category-active'); t.classList.add('bg-gray-200', 'text-gray-700'); });
+            tab.classList.add('category-active');
+            renderMenu(cat);
         });
     });
 }
+function initTableNumberListener() { if(sidebarTableNumberInput) sidebarTableNumberInput.addEventListener('input', (e) => { tableNumber = e.target.value.trim(); saveCartToLocalStorage(); }); }
 
-// Table number change event: save to localStorage
-function initTableNumberListener() {
-    if (tableNumberInput) {
-        tableNumberInput.addEventListener('input', (e) => {
-            tableNumber = e.target.value.trim();
-            saveCartToLocalStorage();
-        });
+function openProductModal(product) {
+    currentModalProduct = product;
+    modalImg.src = product.image;
+    modalName.innerText = product.name;
+    modalBadge.innerText = product.badge;
+    modalDesc.innerText = product.desc || `A cozy ${product.name} crafted with premium ingredients, perfect for your cafe moment.`;
+    modalPriceSpan.innerText = `$${product.price.toFixed(2)}`;
+    modalQtyInput.value = 1;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    setTimeout(() => {
+        modalContentDiv.classList.remove("scale-95", "opacity-0");
+        modalContentDiv.classList.add("scale-100", "opacity-100");
+    }, 10);
+}
+function closeModal() {
+    modalContentDiv.classList.add("scale-95", "opacity-0");
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }, 200);
+}
+modalQtyDec.addEventListener("click", () => { let val = parseInt(modalQtyInput.value); if(val > 1) modalQtyInput.value = val - 1; });
+modalQtyInc.addEventListener("click", () => { let val = parseInt(modalQtyInput.value); modalQtyInput.value = val + 1; });
+modalAddToCartBtn.addEventListener("click", () => {
+    if(currentModalProduct) {
+        const qty = parseInt(modalQtyInput.value);
+        if(qty > 0) addToCart(currentModalProduct.id, qty);
+        closeModal();
     }
-}
+});
+closeModalBtn.addEventListener("click", closeModal);
+modalBackdrop.addEventListener("click", closeModal);
 
-// Global functions for cart buttons
-window.updateQuantity = updateQuantity;
-window.removeItemCompletely = removeItemCompletely;
-
-function initEventListeners() {
-    checkoutBtn.addEventListener("click", checkout);
-    clearCartBtn.addEventListener("click", clearCart);
-    printInvoiceBtn.addEventListener("click", printInvoice);
-}
+// Sidebar controls
+openSidebarBtn.addEventListener("click", openSidebar);
+closeSidebarBtn.addEventListener("click", closeSidebar);
+sidebarBackdrop.addEventListener("click", closeSidebar);
+sidebarCheckout.addEventListener("click", () => { checkout(); closeSidebar(); });
+sidebarClearCart.addEventListener("click", () => { clearCart(); if(cart.length===0) closeSidebar(); });
+sidebarPrintInvoice.addEventListener("click", () => { printInvoice(); closeSidebar(); });
 
 function init() {
     loadCartFromLocalStorage();
     renderMenu("all");
     initCategoryFilters();
-    initEventListeners();
     initTableNumberListener();
     updateCartUI();
-    const allTab = document.querySelector('.category-tab[data-category="all"]');
-    if (allTab) {
-        document.querySelectorAll('.category-tab').forEach(t => {
-            t.classList.remove('bg-orange-500', 'text-white', 'shadow-md');
-            t.classList.add('bg-gray-200', 'text-gray-700');
-        });
-        allTab.classList.remove('bg-gray-200', 'text-gray-700');
-        allTab.classList.add('bg-orange-500', 'text-white', 'shadow-md');
-    }
+    document.querySelector('.category-tab[data-category="all"]').classList.add('category-active');
 }
-
 init();
 </script>
 </body>
